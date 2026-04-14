@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOLARIS CONSENSUS // Verdant Governance Terminal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #051a0f;
+            --bg-panel: #0a2e1c;
+            --bg-card: rgba(10, 46, 28, 0.6);
+            --bg-hover: rgba(20, 80, 50, 0.8);
+            --primary: #00ff88;
+            --primary-dim: #00cc6a;
+            --secondary: #ffd700;
+            --tertiary: #00d4ff;
+            --alert: #ff6b6b;
+            --warning: #ffb347;
+            --text: #c8e6d5;
+            --text-dim: #6b9b7a;
+            --text-muted: #3d6b4a;
+            --border: rgba(0, 255, 136, 0.2);
+            --border-bright: rgba(0, 255, 136, 0.4);
+            --glow: 0 0 20px rgba(0, 255, 136, 0.15);
+            --font: 'JetBrains Mono', 'Courier New', monospace;
+        }
+
+        [data-season="summer"] {
+            --primary: #7fff00;
+            --primary-dim: #66cc00;
+            --bg-panel: #1a3d0f;
+            --text: #d4e6c8;
+        }
+
+        [data-season="autumn"] {
+            --primary: #e8a838;
+            --primary-dim: #c48a2a;
+            --bg-panel: #2d1f0f;
+            --bg-deep: #1a1208;
+            --text: #e6d4b8;
+        }
+
+        [data-season="winter"] {
+            --primary: #88ccff;
+            --primary-dim: #66aadd;
+            --bg-panel: #0f2533;
+            --bg-deep: #05101a;
+            --text: #c8dce8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text);
+            font-family: var(--font);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* CRT/Scanline Effects */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                transparent 50%,
+                rgba(0, 0, 0, 0.1) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.3;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 50%, rgba(0,0,0,0.4) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Layout Grid */
+        #terminal {
+            display: grid;
+            grid-template-rows: 50px 1fr 30px;
+            height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-panel);
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary);
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 24px;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+
+        /* Main Content */
+        .main {
+            display: grid;
+            grid-template-columns: 320px 1fr 280px;
+            gap: 2px;
+            background: var(--border);
+            overflow: hidden;
+        }
+
+        .panel {
+            background: var(--bg-deep);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: var(--bg-panel);
+            padding: 12px 16px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary-dim);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        /* Proposal List */
+        .proposal-item {
+            padding: 12px;
+            margin-bottom: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .proposal-item:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-bright);
+            transform: translateX(4px);
+        }
+
+        .proposal-item.focused {
+            border-left-color: var(--primary);
+            background: rgba(0, 255, 136, 0.1);
+            box-shadow: var(--glow);
+        }
+
+        .proposal-item.voted-yes {
+            border-left-color: var(--primary);
+        }
+
+        .proposal-item.voted-no {
+            border-left-color: var(--alert);
+        }
+
+        .proposal-id {
+            font-size: 0.7rem;
+            color: var(--tertiary);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .proposal-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+            line-height: 1.3;
+            font-size: 0.9rem;
+        }
+
+        .proposal-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .tag {
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tag.farm { background: rgba(0, 255, 136, 0.15); color: var(--primary); }
+        .tag.mesh { background: rgba(0, 212, 255, 0.15); color: var(--tertiary); }
+        .tag.community { background: rgba(255, 211, 0, 0.15); color: var(--secondary); }
+        .tag.infra { background: rgba(255, 107, 107, 0.15); color: var(--alert); }
+
+        /* Growth Visualization */
+        .growth-root {
+            margin-top: 8px;
+            font-family: var(--font);
+            line-height: 1.4;
+        }
+
+        .root-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            margin-top: 2px;
+        }
+
+        .root-bar {
+            letter-spacing: -1px;
+        }
+
+        .root-yes { color: var(--primary); text-shadow: 0 0 8px rgba(0, 255, 136, 0.4); }
+        .root-no { color: var(--alert); }
+        .root-abs { color: var(--text-muted); }
+        .root-empty { color: var(--text-muted); opacity: 0.3; }
+
+        /* Detail View */
+        .detail-header {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-id {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+
+        .detail-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .detail-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .meta-key { color: var(--text-dim); }
+        .meta-val { color: var(--text); font-weight: 600; }
+
+        .detail-desc {
+            line-height: 1.6;
+            color: var(--text);
+            margin-bottom: 24px;
+            padding: 16px;
+            background: var(--bg-panel);
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .impact-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .impact-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        .impact-val {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .impact-val.positive { color: var(--primary); }
+        .impact-val.negative { color: var(--alert); }
+
+        /* Vote Controls */
+        .vote-section {
+            background: var(--bg-panel);
+            padding: 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .vote-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .vote-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .vote-btn {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--font);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .vote-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .vote-btn.yes:hover, .vote-btn.yes.active {
+            border-color: var(--primary);
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--primary);
+        }
+
+        .vote-btn.no:hover, .vote-btn.no.active {
+            border-color: var(--alert);
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--alert);
+        }
+
+        .vote-btn.abstain:hover, .vote-btn.abstain.active {
+            border-color: var(--warning);
+            background: rgba(255, 179, 71, 0.2);
+            color: var(--warning);
+        }
+
+        /* Sidebar Stats */
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 16px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        .harvest-ring {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) 0% 72%, var(--border) 72% 100%);
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .harvest-inner {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: var(--bg-deep);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .harvest-pct {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .mesh-map {
+            font-size: 0.75rem;
+            line-height: 1.6;
+            color: var(--text-dim);
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--bg-panel);
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .mesh-node { 
+            display: inline-block; 
+            width: 8px; 
+            height: 8px; 
+            border-radius: 50%; 
+            margin: 0 2px;
+            background: var(--text-muted);
+        }
+        .mesh-node.active { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+        .mesh-node.voted { background: var(--secondary); }
+
+        /* Filter Input */
+        .filter-bar {
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            display: none;
+        }
+
+        .filter-bar.active {
+            display: block;
+        }
+
+        .filter-input {
+            width: 100%;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            color: var(--primary);
+            padding: 8px 12px;
+            font-family: var(--font);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .filter-input:focus {
+            border-color: var(--primary);
+            box-shadow: var(--glow);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-panel);
+            border-top: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .key-hint {
+            display: flex;
+            gap: 20px;
+        }
+
+        .key {
+            background: var(--bg-deep);
+            padding: 2px 8px;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 26, 15, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-panel);
+            border: 2px solid var(--border-bright);
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--glow);
+        }
+
+        .modal-title {
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .help-grid {
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 8px 16px;
+            font-size: 0.85rem;
+            margin-top: 16px;
+        }
+
+        .help-key {
+            color: var(--primary);
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-panel);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 3000;
+            box-shadow: var(--glow);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dim);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main {
+                grid-template-columns: 280px 1fr;
+            }
+            .panel:last-child {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+            .panel:first-child {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                z-index: 100;
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            .panel:first-child.show {
+                transform: translateX(0);
+            }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body data-season="spring">
+    <div id="terminal">
+        <header class="header">
+            <div class="logo">
+                <span>◈</span>
+                <span>SOLARIS CONSENSUS</span>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="pulse-dot"></span>
+                    <span>MESH ONLINE</span>
+                </div>
+                <div class="status-item">
+                    <span id="clock">--:--:--</span>
+                </div>
+                <div class="status-item" style="cursor: pointer;" onclick="cycleSeason()">
+                    <span id="season-display">SPRING</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="filter-bar" id="filterBar">
+            <input type="text" class="filter-input" id="filterInput" placeholder="Filter proposals... (Esc to clear)">
+        </div>
+
+        <main class="main">
+            <!-- Left: Proposal List -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Active Proposals</span>
+                    <span id="proposal-count">0</span>
+                </div>
+                <div class="panel-content" id="proposalList">
+                    <!-- Proposals injected here -->
+                </div>
+            </div>
+
+            <!-- Center: Detail View -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Detail View</span>
+                    <span id="vote-indicator">—</span>
+                </div>
+                <div class="panel-content" id="detailView">
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-dim); flex-direction: column; gap: 16px;">
+                        <div style="font-size: 3rem; opacity: 0.3;">🌱</div>
+                        <div>Select a proposal to view details</div>
+                        <div style="font-size: 0.8rem;">Press <span class="key">?</span> for help</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Stats & Mesh -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Network Pulse</span>
+                </div>
+                <div class="panel-content">
+                    <div class="harvest-ring">
+                        <div class="harvest-inner">
+                            <div class="harvest-pct" id="quorum-pct">72%</div>
+                            <div class="stat-label">Quorum</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-value" id="active-count">12</div>
+                        <div class="stat-label">Active Nodes</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-value" id="participation">84%</div>
+                        <div class="stat-label">Participation</div>
+                    </div>
+
+                    <div class="mesh-map" id="meshMap">
+                        <!-- ASCII mesh visualization -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="key-hint">
+                <span><span class="key">j</span><span class="key">k</span> navigate</span>
+                <span><span class="key">y</span><span class="key">n</span><span class="key">a</span> vote</span>
+                <span><span class="key">/</span> filter</span>
+                <span><span class="key">s</span> season</span>
+                <span><span class="key">?</span> help</span>
+            </div>
+            <div>Verdant Governance Protocol v2.4</div>
+        </footer>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal">
+            <div class="modal-title">
+                <span>⌨</span>
+                <span>Keyboard Commands</span>
+            </div>
+            <div class="help-grid">
+                <div class="help-key">j / k</div><div>Navigate proposals up/down</div>
+                <div class="help-key">g / G</div><div>Jump to top/bottom</div>
+                <div class="help-key">Enter</div><div>Select proposal</div>
+                <div class="help-key">y</div><div>Vote YES (support)</div>
+                <div class="help-key">n</div><div>Vote NO (oppose)</div>
+                <div class="help-key">a</div><div>Abstain</div>
+                <div class="help-key">/</div><div>Filter proposals</div>
+                <div class="help-key">Esc</div><div>Clear filter/back</div>
+                <div class="help-key">s</div><div>Cycle season theme</div>
+                <div class="help-key">?</div><div>Toggle this help</div>
+            </div>
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-dim); text-align: center;">
+                Press <span class="key">?</span> or <span class="key">Esc</span> to close
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Data Model
+        const proposals = [
+            {
+                id: 'H2O-042',
+                title: 'Greywater Integration for Tower Hydroponics',
+                category: 'farm',
+                description: 'Route shower runoff to Tier-2 hydroponics via ceramic bio-filter. Reduces freshwater draw by 15% per cycle. Installation requires 2 workers for 4 hours.',
+                impact: { water: '-400L/week', power: '+0.5kW', yield: '+0%', labor: '4hrs' },
+                votes: { yes: 14, no: 3, abstain: 5 },
+                quorum: 20,
+                userVote: null,
+                expires: '2026-04-14'
+            },
+            {
+                id: 'MESH-088',
+                title: 'Ridge Line Node Expansion',
+                category: 'mesh',
+                description: 'Add relay node at coordinates 45.52, -122.68 to bridge Valley Cluster with Ridge Farm. Extends mesh range by 1.2km. Solar-powered LoRa relay.',
+                impact: { range: '+1.2km', power: '15W solar', latency: '-45ms', stability: '+40%' },
+                votes: { yes: 18, no: 2, abstain: 1 },
+                quorum: 15,
+                userVote: 'yes',
+                expires: '2026-04-12'
+            },
+            {
+                id: 'SEED-015',
+                title: 'Regional Seed Vault Exchange Protocol',
+                category: 'community',
+                description: 'Standardize seed catalog format and establish quarterly exchange schedule between all greenhouse sites. Include drought-resistant varieties.',
+                impact: { varieties: '+45', exchanges: '4/year', resilience: '+30%', cost: '85 credits' },
+                votes: { yes: 22, no: 1, abstain: 2 },
+                quorum: 20,
+                userVote: 'yes',
+                expires: '2026-04-15'
+            },
+            {
+                id: 'PV-031',
+                title: 'Vertical Farm Tier-2 Hydroponic Expansion',
+                category: 'farm',
+                description: 'Expand Tier-2 hydroponics into unused solar array section B. Requires 400L water/week and 2kW power. Projected yield: +340kg leafy greens per cycle.',
+                impact: { water: '400L/wk', power: '2kW', yield: '+340kg', labor: '3 days' },
+                votes: { yes: 12, no: 6, abstain: 7 },
+                quorum: 20,
+                userVote: null,
+                expires: '2026-04-13'
+            },
+            {
+                id: 'HEAT-055',
+                title: 'Compost Heat Recovery Installation',
+                category: 'infra',
+                description: 'Install thermosiphon heat exchangers on compost rows A-D. Capture waste heat to warm greenhouse north wall. Estimated 8kWh/day recovered.',
+                impact: { heat: '8kWh/day', cost: '320 cr', install: '5 days', carbon: '-12%' },
+                votes: { yes: 16, no: 4, abstain: 3 },
+                quorum: 15,
+                userVote: 'no',
+                expires: '2026-04-16'
+            },
+            {
+                id: 'BIO-022',
+                title: 'Black Soldier Fly Larvae Composting Pilot',
+                category: 'farm',
+                description: 'Pilot BSF colony at South Compost Hub. Larvae process organic waste 4x faster. Protein byproduct usable as fish/chicken feed.',
+                impact: { speed: '4x', protein: '12kg', weeks: '8 pilot', labor: 'low' },
+                votes: { yes: 19, no: 0, abstain: 5 },
+                quorum: 20,
+                userVote: null,
+                expires: '2026-04-14'
+            }
+        ];
+
+        // State
+        let state = {
+            cursor: 0,
+            filter: '',
+            showHelp: false,
+            season: 0
+        };
+
+        const seasons = ['spring', 'summer', 'autumn', 'winter'];
+        const seasonNames = { spring: 'SPRING', summer: 'SUMMER', autumn: 'AUTUMN', winter: 'WINTER' };
+
+        // DOM Elements
+        const proposalList = document.getElementById('proposalList');
+        const detailView = document.getElementById('detailView');
+        const filterBar = document.getElementById('filterBar');
+        const filterInput = document.getElementById('filterInput');
+        const helpModal = document.getElementById('helpModal');
+        const toast = document.getElementById('toast');
+
+        // Utilities
+        function getFilteredProposals() {
+            if (!state.filter) return proposals;
+            const f = state.filter.toLowerCase();
+            return proposals.filter(p => 
+                p.title.toLowerCase().includes(f) || 
+                p.id.toLowerCase().includes(f) ||
+                p.category.includes(f)
+            );
+        }
+
+        function totalVotes(p) {
+            return p.votes.yes + p.votes.no + p.votes.abstain;
+        }
+
+        function quorumPct(p) {
+            return Math.min(100, Math.round((totalVotes(p) / p.quorum) * 100));
+        }
+
+        function yesPct(p) {
+            const t = totalVotes(p);
+            return t === 0 ? 0 : Math.round((p.votes.yes / t) * 100);
+        }
+
+        function growthBar(p) {
+            const yes = p.votes.yes;
+            const no = p.votes.no;
+            const abs = p.votes.abstain;
+            const total = yes + no + abs;
+            
+            if (total === 0) return '░░░░░░░░░░░░░░░░░░░░ Dormant';
+            
+            const y = Math.round((yes / p.quorum) * 20);
+            const n = Math.round((no / p.quorum) * 20);
+            const a = Math.max(0, 20 - y - n);
+            
+            return `<span class="root-yes">${'█'.repeat(Math.min(20, y))}</span><span class="root-no">${'█'.repeat(Math.min(20, n))}</span><span class="root-abs">${'░'.repeat(Math.max(0, a))}</span> ${quorumPct(p)}%`;
+        }
+
+        function renderList() {
+            const filtered = getFilteredProposals();
+            proposalList.innerHTML = '';
+            document.getElementById('proposal-count').textContent = filtered.length;
+
+            filtered.forEach((p, idx) => {
+                const div = document.createElement('div');
+                div.className = 'proposal-item';
+                if (idx === state.cursor) div.classList.add('focused');
+                if (p.userVote === 'yes') div.classList.add('voted-yes');
+                if (p.userVote === 'no') div.classList.add('voted-no');
+                
+                div.innerHTML = `
+                    <div class="proposal-id">${p.id} // ${p.expires}</div>
+                    <div class="proposal-title">${p.title}</div>
+                    <div class="proposal-meta">
+                        <span class="tag ${p.category}">${p.category}</span>
+                        <span>${totalVotes(p)}/${p.quorum} votes</span>
+                    </div>
+                    <div class="growth-root">
+                        <div class="root-row">
+                            <span class="root-bar">${growthBar(p)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                div.onclick = () => {
+                    state.cursor = idx;
+                    renderList();
+                    renderDetail();
+                };
+                
+                proposalList.appendChild(div);
+            });
+
+            // Scroll to focused
+            const focused = proposalList.querySelector('.focused');
+            if (focused) focused.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+
+        function renderDetail() {
+            const filtered = getFilteredProposals();
+            const p = filtered[state.cursor];
+            
+            if (!p) {
+                detailView.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 40px;">No proposal selected</div>';
+                return;
+            }
+
+            document.getElementById('vote-indicator').textContent = p.userVote ? `[${p.userVote.toUpperCase()}]` : '—';
+
+            let impactHtml = '';
+            for (const [k, v] of Object.entries(p.impact)) {
+                const isPos = v.includes('+') || k === 'yield' || k === 'resilience' || k === 'speed';
+                const isNeg = v.includes('-') && !v.includes('+-');
+                const cls = isPos ? 'positive' : isNeg ? 'negative' : '';
+                impactHtml += `
+                    <div class="impact-card">
+                        <div class="impact-label">${k}</div>
+                        <div class="impact-val ${cls}">${v}</div>
+                    </div>
+                `;
+            }
+
+            detailView.innerHTML = `
+                <div class="detail-header">
+                    <div class="detail-id">${p.id} // ${p.category.toUpperCase()} // ${p.expires}</div>
+                    <div class="detail-title">${p.title}</div>
+                    <div class="detail-meta">
+                        <div class="meta-item">
+                            <span class="meta-key">Status:</span>
+                            <span class="meta-val" style="color: var(--primary);">Active</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-key">Quorum:</span>
+                            <span class="meta-val">${totalVotes(p)}/${p.quorum} (${quorumPct(p)}%)</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-key">Consensus:</span>
+                            <span class="meta-val" style="color: ${yesPct(p) > 50 ? 'var(--primary)' : 'var(--alert)'};">${yesPct(p)}% Yes</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-desc">${p.description}</div>
+                
+                <div class="impact-grid">${impactHtml}</div>
+                
+                <div class="vote-section">
+                    <div class="vote-title">Cast Your Vote</div>
+                    <div class="vote-buttons">
+                        <button class="vote-btn yes ${p.userVote === 'yes' ? 'active' : ''}" onclick="castVote('yes')">
+                            ✓ YES (${p.votes.yes})
+                        </button>
+                        <button class="vote-btn no ${p.userVote === 'no' ? 'active' : ''}" onclick="castVote('no')">
+                            ✗ NO (${p.votes.no})
+                        </button>
+                        <button class="vote-btn abstain ${p.userVote === 'abstain' ? 'active' : ''}" onclick="castVote('abstain')">
+                            ○ ABSTAIN (${p.votes.abstain})
+                        </button>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-dim); text-align: center;">
+                        Press <span class="key">y</span>, <span class="key">n</span>, or <span class="key">a</span> to vote
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMesh() {
+            const nodes = 15;
+            const active = 12;
+            const voted = 8;
+            let html = '<div style="margin-bottom: 8px; font-weight: 600; color: var(--primary);">Mesh Topology</div>';
+            
+            for (let i = 0; i < 3; i++) {
+                let row = '';
+                for (let j = 0; j < 5; j++) {
+                    const idx = i * 5 + j;
+                    if (idx < nodes) {
+                        const isActive = idx < active;
+                        const hasVoted = idx < voted;
+                        row += `<span class="mesh-node ${isActive ? 'active' : ''} ${hasVoted ? 'voted' : ''}"></span>`;
+                        if (j < 4) row += '──';
+                    }
+                }
+                html += `<div>${row}</div>`;
+                if (i < 2) html += '<div style="margin-left: 4px;">│<span style="margin-left: 32px;">│</span><span style="margin-left: 32px;">│</span></div>';
+            }
+            
+            html += `<div style="margin-top: 12px; font-size: 0.7rem; color: var(--text-dim);">
+                <span style="color: var(--primary);">●</span> Online 
+                <span style="color: var(--secondary); margin-left: 8px;">●</span> Voted
+                <span style="color: var(--text-muted); margin-left: 8px;">●</span> Offline
+            </div>`;
+            
+            document.getElementById('meshMap').innerHTML = html;
+        }
+
+        function castVote(vote) {
+            const filtered = getFilteredProposals();
+            const p = filtered[state.cursor];
+            if (!p) return;
+
+            // Remove previous vote
+            if (p.userVote === 'yes') p.votes.yes--;
+            if (p.userVote === 'no') p.votes.no--;
+            if (p.userVote === 'abstain') p.votes.abstain--;
+
+            // Add new vote
+            p.userVote = vote;
+            if (vote === 'yes') p.votes.yes++;
+            if (vote === 'no') p.votes.no++;
+            if (vote === 'abstain') p.votes.abstain++;
+
+            renderList();
+            renderDetail();
+            showToast(`Vote recorded: ${vote.toUpperCase()}`);
+            
+            // Update stats
+            updateStats();
+        }
+
+        function updateStats() {
+            const total = proposals.reduce((acc, p) => acc + totalVotes(p), 0);
+            const max = proposals.reduce((acc, p) => acc + p.quorum, 0);
+            const pct = Math.round((total / max) * 100);
+            document.getElementById('quorum-pct').textContent = pct + '%';
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function cycleSeason() {
+            state.season = (state.season + 1) % seasons.length;
+            document.body.dataset.season = seasons[state.season];
+            document.getElementById('season-display').textContent = seasonNames[seasons[state.season]];
+            showToast(`Theme: ${seasonNames[seasons[state.season]]}`);
+        }
+
+        // Keyboard Handling
+        document.addEventListener('keydown', (e) => {
+            if (e.target === filterInput) {
+                if (e.key === 'Escape') {
+                    filterBar.classList.remove('active');
+                    filterInput.value = '';
+                    state.filter = '';
+                    state.cursor = 0;
+                    renderList();
+                    renderDetail();
+                } else if (e.key === 'Enter') {
+                    filterBar.classList.remove('active');
+                }
+                return;
+            }
+
+            if (state.showHelp) {
+                if (e.key === 'Escape' || e.key === '?') {
+                    state.showHelp = false;
+                    helpModal.classList.remove('active');
+                }
+                return;
+            }
+
+            switch(e.key) {
+                case 'j':
+                case 'ArrowDown':
+                    e.preventDefault();
+                    const filtered = getFilteredProposals();
+                    if (state.cursor < filtered.length - 1) {
+                        state.cursor++;
+                        renderList();
+                        renderDetail();
+                    }
+                    break;
+                    
+                case 'k':
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (state.cursor > 0) {
+                        state.cursor--;
+                        renderList();
+                        renderDetail();
+                    }
+                    break;
+                    
+                case 'g':
+                    e.preventDefault();
+                    state.cursor = 0;
+                    renderList();
+                    renderDetail();
+                    break;
+                    
+                case 'G':
+                    e.preventDefault();
+                    state.cursor = getFilteredProposals().length - 1;
+                    renderList();
+                    renderDetail();
+                    break;
+                    
+                case 'Enter':
+                    renderDetail();
+                    break;
+                    
+                case 'y':
+                    castVote('yes');
+                    break;
+                    
+                case 'n':
+                    castVote('no');
+                    break;
+                    
+                case 'a':
+                    castVote('abstain');
+                    break;
+                    
+                case '/':
+                    e.preventDefault();
+                    filterBar.classList.add('active');
+                    filterInput.focus();
+                    break;
+                    
+                case 's':
+                    cycleSeason();
+                    break;
+                    
+                case '?':
+                    e.preventDefault();
+                    state.showHelp = true;
+                    helpModal.classList.add('active');
+                    break;
+                    
+                case 'Escape':
+                    if (filterBar.classList.contains('active')) {
+                        filterBar.classList.remove('active');
+                        filterInput.value = '';
+                        state.filter = '';
+                        state.cursor = 0;
+                        renderList();
+                        renderDetail();
+                    }
+                    break;
+            }
+        });
+
+        filterInput.addEventListener('input', (e) => {
+            state.filter = e.target.value;
+            state.cursor = 0;
+            renderList();
+            renderDetail();
+        });
+
+        // Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+        }, 1000);
+
+        // Init
+        renderList();
+        renderDetail();
+        renderMesh();
+        updateStats();
+    </script>
+</body>
+</html>
